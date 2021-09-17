@@ -1,7 +1,9 @@
+// Styles
 import './VInput.sass'
 
 // Components
 import { VIcon } from '@/components/VIcon'
+import { VMessages } from '@/components/VMessages'
 
 // Composables
 import { makeDensityProps, useDensity } from '@/composables/density'
@@ -25,6 +27,14 @@ export const VInput = defineComponent({
     dirty: Boolean,
     appendIcon: String,
     prependIcon: String,
+    // TODO: implement auto
+    hideDetails: [Boolean, String] as PropType<boolean | 'auto'>,
+    hint: String,
+    messages: {
+      type: [Array, String],
+      default: () => ([]),
+    },
+    persistentHint: Boolean,
     direction: {
       type: String as PropType<'horizontal' | 'vertical'>,
       default: 'horizontal',
@@ -54,6 +64,15 @@ export const VInput = defineComponent({
     return () => {
       const hasPrepend = (slots.prepend || props.prependIcon)
       const hasAppend = (slots.append || props.appendIcon)
+      const hasHint = !!(slots.hint || props.hint)
+      const hasMessages = !!(slots.messages || props.messages?.length)
+      const hasDetails = !props.hideDetails || (
+        props.hideDetails === 'auto' && (hasMessages || hasHint)
+      )
+      const showMessages = hasMessages || (
+        hasHint &&
+        (props.persistentHint || props.focused)
+      )
 
       return (
         <div class={[
@@ -105,8 +124,14 @@ export const VInput = defineComponent({
             </div>
           ) }
 
-          { slots.details && (
+          { hasDetails && (
             <div class="v-input__details">
+              <VMessages
+                active={ showMessages }
+                value={ hasMessages ? props.messages : [props.hint] }
+                v-slots={{ default: slots.messages }}
+              />
+
               { slots.details?.() }
             </div>
           ) }
